@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：命名空间，类似于java包，主要用于隔离sql语句的，后续有重要作用
+     #{}：占位符，相当于jdbc的?
+     ${}:字符串拼接指令，注意如果入参为普通数据类型时，括号里面只能写value
+ -->
+<mapper namespace="resultMapUse.UseResultMap">
+
+<!--
+    private Integer id;
+    private String lastName;
+    private String gender;
+    private int year;-->
+<!--
+    可以使用resultType使mybatis对返回的结果自动封装
+    也可以使用resultMap来子定义封装的规则
+    可以使用下面这个标签来声明自定义封装规则
+    <resultMap></resultMap>
+    该标签的type属性声明查询结果将被封装为什么类型
+    id属性唯一标识这个自定义封装规则
+    标签内部的<id>子标签用于定义主键列的封装规则
+    column:声明数据库中对应的列
+    property:声明封装到哪一项属性中
+    <result>标签可以用于声明普通列的封装规则
+
+    <id>定义主键在底层会有优化
+
+    在resultMap定义封装规则时,如果不指定的话,那么查询结果将会自动进行封装
+    但是如果我们编写resultMap,那么应该将规则编写完整
+-->
+    <select id="findById" resultMap="studentResultMap">
+        SELECT * FROM student WHERE id = #{id}
+    </select>
+    <resultMap id="studentResultMap" type="com.itheima.domain.Student">
+        <id  column="id" property="id"></id>
+        <result column="name" property="lastName"></result>
+        <result column="gender" property="gender"></result>
+        <result column="year" property="year"></result>
+    </resultMap>
+
+<!--
+查询员工时,同时查询出员工所在的部门信息,员工中存在一个部门属性,查询出来的某一列是部门属性的子属性
+可以直接使用级联属性来进行数据的封装
+也可以使用关联标签对属性进行封装,这个association标签是用于封装关联对象的子标签
+ <resultMap id="" type="">
+        <association property="" javaType="">
+            <id column="" property=""></id>
+            <result column="" property=""></result>
+        </association>
+    </resultMap>
+-->
+
+
+
+    <select id="findByIdPlus" resultMap="studentPlusResultMap">
+        select stu.id stu_id,stu.name stu_name,stu.gender stu_gender,stu.year stu_year,
+        dept.id dept_id,dept.name dept_name FROM student stu inner join dept on  stu.dept_id = dept.id where stu.id = #{id};
+    </select>
+
+    <resultMap id="studentPlusResultMap" type="com.itheima.domain.StudentPlus">
+        <id  column="stu.id" property="id"></id>
+        <result column="stu.name" property="lastName"></result>
+        <result column="stu.gender" property="gender"></result>
+        <result column="stu.year" property="year"></result>
+        <association property="dept" javaType="com.itheima.domain.Department">
+            <id column="dept_id" property="id"></id>
+            <result column="dept_name" property="name"></result>
+        </association>
+    </resultMap>
+
+<!--    使用association标签来封装关联对象,这里直接使用select子标签来调用特定的查询,而column标签则指明前面查询出来的-->
+<!--    某列的结果传入这个查询,作为这个查询所需要的参数-->
+<!--    <association property="" select="" column=""></association>-->
+    <select id="findStuPlusByIdStep" resultMap="studentPlusStep">
+        SELECT * FROM student where id = #{id}
+    </select>
+
+    <resultMap id="studentPlusStep" type="com.itheima.domain.StudentPlus">
+        <id  column="stu.id" property="id"></id>
+        <result column="stu.name" property="lastName"></result>
+        <result column="stu.gender" property="gender"></result>
+        <result column="stu.year" property="year"></result>
+        <association property="dept" select="deptById" column="{id=dept_id}"></association>
+    </resultMap>
+
+    <select id="deptById" resultType="com.itheima.domain.Department">
+        SELECT * FROM dept WHERE id = #{id}
+    </select>
+
+
+    <!--
+       要求查出部门中所有的员工,使用多表联查
+    当要封装的属性为集合属性时,可以使用collection标签来对属性进行封装,其中property属性为对应的元素的属性
+    ofType:要被封装为什么类型的元素,集合中是什么类型的元素
+     <collection property="" ofType="">
+
+     </collection>
+       -->
+    <select id="findDeptPlus" resultMap="DeptResultMap">
+             select stu.id stu_id,stu.name stu_name,stu.gender stu_gender,stu.year stu_year,
+        dept.id dept_id,dept.name dept_name FROM student stu inner join dept on  stu.dept_id = dept.id where dept_id = #{dept_id}
+    </select>
+
+    <resultMap id="DeptResultMap" type="com.itheima.domain.Department">
+        <id column="dept_id" property="id"></id>
+        <result column="dept_name" property="name"></result>
+        <collection property="list" ofType="com.itheima.domain.Student">
+            <id  column="stu_id" property="id"></id>
+            <result column="stu_name" property="lastName"></result>
+            <result column="stu_gender" property="gender"></result>
+            <result column="stu_year" property="year"></result>
+        </collection>
+    </resultMap>
+
+<!--
+实现上面的要求使用分步查询来实现
+  <collection property="" select="" column="">
+  </collection>
+
+在这个collection标签内部使用select属性使用另一个查询,column是要求传入的值的列-->
+    <select id="findDeptPlusStep" resultMap="DeptResultMapStep">
+        SELECT * FROM dept WHERE id = #{id}
+    </select>
+    <select id="findStudentByDeptId" resultType="com.itheima.domain.Student">
+        SELECT * FROM student WHERE dept_id = #{id}
+    </select>
+    <resultMap id="DeptResultMapStep" type="com.itheima.domain.Department">
+        <id column="id" property="id"></id>
+        <result column="name" property="name"></result>
+        <collection property="list" select="findStudentByDeptId" column="id" >
+        </collection>
+    </resultMap>
+</mapper>

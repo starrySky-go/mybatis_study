@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：命名空间，类似于java包，主要用于隔离sql语句的，后续有重要作用
+     #{}：占位符，相当于jdbc的?
+     ${}:字符串拼接指令，注意如果入参为普通数据类型时，括号里面只能写value
+ -->
+<mapper namespace="com.itheima.domain.StudentMapper">
+    <!-- id:sql id标识sql语句的唯一标识
+             parameterType:入参的数据类型
+             resultType:返回结果的数据类型
+    -->
+    <select id="getStudentById" parameterType="int" resultType="com.itheima.domain.Student">
+        SELECT * FROM student where id = #{id};
+    </select>
+
+    <update id="updateStudent" parameterType="com.itheima.domain.Student">
+        UPDATE student set gender = #{gender} WHERE id = #{id};
+    </update>
+
+<!--    <insert id="insertStudent" parameterType="com.itheima.domain.Student" useGeneratedKeys="true" keyProperty="id">-->
+<!--        INSERT INTO student values (null,#{name},#{gender},#{year});-->
+<!--    </insert>-->
+
+    <insert id="insertStudent" parameterType="com.itheima.domain.Student" >
+        <selectKey keyProperty="id" resultType="" order="BEFORE">
+            <!--  查询中某个值,将该值赋给某个类中的某个变量
+            keyProperty属性:将值赋给某个属性
+            resultType:声明语句运行结果的类型
+
+
+            order:声明这条语句的运行顺序,可以是before或者是After
+            -->
+        </selectKey>
+           INSERT INTO student values (null,#{name},#{gender},#{year})
+      </insert>
+        <delete id="deleteById">
+            DELETE FROM student where id = #{id}
+        </delete>
+<!--    <select id="findStudentByIdAndName" resultType="com.itheima.domain.Student">-->
+<!--        select * FROM student where id = #{id} and lastname = #{lastName}-->
+<!--    </select>-->
+
+    <!--    </delete>-->
+<!--    &lt;!&ndash; resultType:如果返回结果是集合时，只需要设置为元素的数据类型就可 &ndash;&gt;-->
+<!--    <select id="getUserByName" parameterType="String" resultType="com.cenobitor.pojo.User">-->
+<!--        SELECT-->
+<!--          `id`,-->
+<!--          `username`,-->
+<!--          `birthday`,-->
+<!--          `sex`,-->
+<!--          `address`-->
+<!--        FROM `user`-->
+<!--        WHERE username LIKE '%${value}%'-->
+<!--    </select>-->
+
+<!--    <insert id="insertUser" parameterType="com.cenobitor.pojo.User">-->
+<!--        INSERT INTO USER (`username`,`birthday`,`sex`,`address`)-->
+<!--        VALUES (#{username},#{birthday},#{sex},#{address})-->
+<!--    </insert>-->
+
+<!--    &lt;!&ndash;返回MySql自增主键&ndash;&gt;-->
+<!--    &lt;!&ndash; useGeneratedKeys:标识插入使用自增id-->
+<!--         keyProperty:与useGeneratedKeys配套使用，用于绑定主键接收的pojo属性-->
+<!--     &ndash;&gt;-->
+<!--    <insert id="insertUserKey" parameterType="com.cenobitor.pojo.User"-->
+<!--            useGeneratedKeys="true" keyProperty="id">-->
+
+<!--        &lt;!&ndash; selectKey:用于配置主键返回-->
+<!--                      keyProperty：要绑定的pojo属性-->
+<!--                      resultType:属性数据类型-->
+<!--                      order:指定什么时候执行，AFTER之后-->
+<!--                 &ndash;&gt;-->
+<!--        &lt;!&ndash; <selectKey keyProperty="id" resultType="int" order="AFTER">-->
+<!--             SELECT LAST_INSERT_ID()-->
+<!--        </selectKey> &ndash;&gt;-->
+
+<!--        INSERT INTO USER (`username`,`birthday`,`sex`,`address`)-->
+<!--        VALUES (#{username},#{birthday},#{sex},#{address})-->
+<!--    </insert>-->
+
+<!--    &lt;!&ndash;返回MySql的uuid返回主键&ndash;&gt;-->
+<!--    <insert id="insertUserUUID" parameterType="com.cenobitor.pojo.User">-->
+
+<!--        &lt;!&ndash; selectKey:用于配置主键返回-->
+<!--                      keyProperty：要绑定的pojo属性-->
+<!--                      resultType:属性数据类型-->
+<!--                      order:指定什么时候执行，AFTER之后-->
+<!--                 &ndash;&gt;-->
+<!--        <selectKey keyProperty="uuid" resultType="String" order="BEFORE">-->
+<!--            SELECT UUID()-->
+<!--        </selectKey>-->
+
+<!--        INSERT INTO USER (`username`,`birthday`,`sex`,`address`,`uuid`)-->
+<!--        VALUES (#{username},#{birthday},#{sex},#{address},#{uuid})-->
+<!--    </insert>-->
+
+<!--    <update id="updateUser" parameterType="com.cenobitor.pojo.User">-->
+<!--        UPDATE USER SET username = #{username} WHERE id = #{id}-->
+<!--    </update>-->
+
+<!--    <delete id="deleteUser" parameterType="com.cenobitor.pojo.User">-->
+<!--        DELETE FROM `user` WHERE `id` = #{id}-->
+<!--    </delete>-->
+
+</mapper>

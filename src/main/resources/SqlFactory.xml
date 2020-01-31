@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+    <!-- 和spring整合后 environments配置将废除 -->
+    <settings>
+        <setting name="lazyLoadingEnabled" value="true"/>
+        <setting name="aggressiveLazyLoading" value="false"/>
+        <!-- 控制台打印sql语句 -->
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+    </settings>
+    <environments default="development">
+        <environment id="development">
+
+            <!-- 使用jdbc事务管理 -->
+            <transactionManager type="JDBC" />
+            <!-- 数据库连接池 -->
+            <dataSource type="POOLED">
+                <property name="driver" value="com.mysql.cj.jdbc.Driver" />
+                <property name="url" value="jdbc:mysql://localhost:3306/mybatis?serverTimezone=UTC" />
+                <property name="username" value="root" />
+                <property name="password" value="1234567890" />
+            </dataSource>
+        </environment>
+    </environments>
+<!--    <databaseIdProvider type="">-->
+<!--        <property name="" value=""/>-->
+<!--    </databaseIdProvider>-->
+    <mappers>
+        <!-- 第一种方式，加载 resource-->
+<!--        <mapper resource="User.xml"></mapper>-->
+<!--        <mapper resource="UserMapper.xml"/>-->
+<!--        <mapper resource="mybatisMapper.xml"></mapper>-->
+
+<!--&lt;!&ndash;        <mapper resource="GeneratedKeys.xml"></mapper>&ndash;&gt;-->
+        <!-- 第三种方式，包扫描器要求(推荐使用此方式)：
+             1、映射文件与接口同一目录下
+             2、映射文件名必需与接口文件名称一致
+        -->
+<!--
+  获取自增主键的mapper文件
+  <mapper resource="GeneratedKey.xml"></mapper
+  >-->
+<!--
+ 获取参数的配置文件
+ <mapper resource="Param.xml"></mapper>
+ -->
+<!--
+    设置返回值
+<mapper resource="returnValue.xml"></mapper>-->
+<!--        ResultMap的使用-->
+<!--        <mapper resource="resultMapMapper.xml"></mapper>-->
+<!--        <package name="pratices"/>-->
+<!--        <package name="GetGeneratedKeys"/>-->
+        <!--<package name="com.cenobitor.mapper"/>-->
+        <mapper resource="returnValue.xml"></mapper>
+    </mappers>
+
+
+</configuration>

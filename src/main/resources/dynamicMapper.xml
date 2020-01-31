@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：命名空间，类似于java包，主要用于隔离sql语句的，后续有重要作用
+     #{}：占位符，相当于jdbc的?
+     ${}:字符串拼接指令，注意如果入参为普通数据类型时，括号里面只能写value
+      private Integer id;
+      private String lastName;
+      private String gender;
+      private int year;
+ -->
+<mapper namespace="dynamic.DynamicUse">
+
+
+    <resultMap id="studentResultMap" type="com.itheima.domain.Student">
+        <id  column="id" property="id"></id>
+        <result column="name" property="lastName"></result>
+        <result column="gender" property="gender"></result>
+        <result column="year" property="year"></result>
+    </resultMap>
+
+
+<!--
+        这里可能会出现多余的AND
+        <select id="testif" resultMap="studentResultMap">-->
+<!--      SELECT * FROM student WHERE-->
+<!--       <if test="id != null">id = #{id}</if>-->
+<!--       <if test="lastName != null">AND name = #{lastName}</if>-->
+<!--       <if test="gender != null">AND gender = #{gender}</if>-->
+<!--       <if test="year != null">AND year = #{year}</if>-->
+<!--  </select>-->
+
+<!--
+    Where标签能够去掉前面多余的AND标签,但是无法去掉后面多余的AND
+-->
+        <select id="testWhere" resultMap="studentResultMap">
+          SELECT * FROM student
+          <where>
+           <if test="id != null">id = #{id}</if>
+           <if test="lastName != null">AND name = #{lastName}</if>
+           <if test="gender != null">AND gender = #{gender}</if>
+           <if test="year != null">AND year = #{year}</if>
+          </where>
+      </select>
+
+<!--
+ <trim prefix="" prefixOverrides="" suffix="" suffixOverrides=""></trim>
+
+ prefix:在标签内部生成的语句整体加上一个前缀
+ prefixOverrides:将生成语句的多余的字符去掉
+ suffix:在生成的语句整体加上一个后缀
+ suffixOverrides:将生成的语句后面多余的字符串去掉
+
+ 这样就能够解决 后面/前面 多余的 and/or 的内容
+-->
+    <select id="testTrim" resultMap="studentResultMap">
+        SELECT * FROM student
+        <trim prefix="WHERE" suffixOverrides="AND">
+            <if test="id != null">id = #{id} AND</if>
+            <if test="lastName != null"> name = #{lastName} AND </if>
+            <if test="gender != null">gender = #{gender} AND</if>
+            <if test="year != null"> year = #{year}</if>
+        </trim>
+    </select>
+
+<!--
+4.choose标签的使用相当于switch-case的使用
+   <choose>
+         <when test="">
+
+         </when>
+          <otherwise>
+
+          </otherwise>
+   </choose>
+   只使用其中一个查询条件,当满足test内部编写的OGNL表达式,才会使用这个条件
+   就是查询时只使用其中一个条件
+   而<otherwise>标签就相当于switch中的default,如果上面所有的条件都不满足,那就使用otherwise标签内部所使用的条件
+-->
+    <select id="testChoose" resultMap="studentResultMap">
+        SELECT * FROM student where
+        <choose>
+            <when test="id != null">id = #{id}</when>
+            <when test="lastName != null"> name = #{lastName} </when>
+            <when test="gender != null">gender = #{gender} </when>
+            <when test="year != null"> year = #{year}</when>
+            <otherwise>1 = 1</otherwise>
+      </choose>
+    </select>
+<!--
+<foreach collection="" item="item_id" separator="" open="" close="">
+            #{item_id}
+       </foreach>
+      collection:指定要遍历的集合
+      list类型的参数会特殊处理封装在map,map的key就叫做list
+      item:将遍历出的元素赋给指定的变量
+      separator:指明遍历出来元素之间的分割符
+      open:结果集拼接上一个开始符号
+      close:遍历出来的结果集拼接上一个结束符号-->
+    <select id="testForeach" resultMap="studentResultMap" parameterType="list">
+        SELECT * FROM student where id in
+        <foreach collection="list" open="(" close=")" separator="," item="data" >
+            #{data}
+        </foreach>
+    </select>
+</mapper>

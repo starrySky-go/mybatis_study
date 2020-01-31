@@ -1,0 +1,309 @@
+mybatis的hello world入门程序
+
+1.编写一个SqlFactory用于创建SqlSessionFactory
+2.编写一个mapper文件用于编写sql语句
+3.直接调用mapper里面的sql语句来执行
+
+
+
+第二种方式
+
+编写一个studentMapper的dao层接口类
+然后在mapper文件中编写一个与该类命名空间唯一对应的文件
+通过SqlSession获取该接口类的实现类
+
+dao层接口的实现类是通过
+
+需要注意的是 SqlSession sqlSession = getSqlSessionFactory().openSession()这种方式创建出来的
+SqlSession是需要手动提交的,不会自动提交的
+
+获取自增主键的方法:
+
+设计数据库时设计数据库为自增主键,那么插入数据时可以设置该值为null
+
+
+- 获取自增主键的方式
+在mybatis中可以设置属性useGeneratedKeys为true,同时通过keyProperty指定自动生成的主键值要赋给传入的对象中哪一个属性
+这样传入的对象的属性便能获取到对应的主键的值
+
+<insert id="insertStudent" parameterType="com.itheima.domain.Student" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO student values (null,#{name},#{gender},#{year});
+</insert>
+
+当对应数据库不支持自增主键的方式,如何才能获取到该自增主键的值,比如说Oracle
+
+    <selectKey keyProperty="id" resultType="" order="BEFORE">
+            <!--  查询中某个值,将该值赋给某个类中的某个变量
+            keyProperty属性:将值赋给某个属性
+            resultType:声明语句运行结果的类型
+            order:声明这条语句的运行顺序,可以是before或者是After
+            -->
+        </selectKey>
+
+可以使用<selectKey></selectKey>标签来将执行的结果注入到参数的某个属性中,并且声明执行的顺序
+
+
+
+mybatis传入参数处理:
+单个参数:
+mybatis不会做特殊处理
+#{参数名}:取出参数值  这个参数名可以随意编写
+
+多个参数:mybatis会做特殊处理
+
+    多个参数会被封装成一个map
+    key:param1...paramN,或者参数的索引（0,1...)也行
+    value:传入的参数值
+    #{}就是从map中获取指定key的值
+
+    可以通过在dao层的接口方法明确指定mybatis封装多个参数为map时key的取值,可以使用@Param("")注解
+
+    如果方法中存在多个参数,如果多个参数刚好是POJO对象的属性,那么直接传入一个POJO即可
+
+    如果不是POJO,那么直接传入一个map对象
+
+    如果存在某个查询方法中存在多个参数,并且这个查询方法经常使用,那么可以直接定义一个TO(transfer Object)来传递参数即可
+
+    public Employee getEmp(Integer id,Employee emp)
+    取值: id ==>#{param1} lastName====>#{param2.lastName}的方式将值取出
+    也就是说,所有的参数都会被封装为一个map对象
+
+    特别注意:如果参数是Collection(List,set)类型或者是数组类型,也会特殊处理,即使只有一个参数
+    key: Collection(collection) Collection类型使用的key为collection,如果是List也可以使用这个key:list
+    数组(array)
+
+    public Employee getEmpById(List<Integer> id)
+    取值:取出第一个id的值 #{list[0]}
+
+    mybatis同样是通过动态代理来生成,但是在invocationHandler中的invoke方法中,如果是接口外的方法直接放行
+    但是如果是接口中的方法,将会对传入的参数进行封装,封装为一个map
+
+    在使用代理对象来执行对应的增删改操作时,传入的参数会在invoke方法处被封装,封装为一个map,再到动态
+    生成的方法内部执行,执行方法内部的sql语句
+
+    返回值类型必须编写,不然mybatis将不清楚查出的数据将要如何进行封装
+
+    参数值的获取:
+
+    #{}:以预编译的方式通过指明key获取map集合中属性的值,相当于使用PrepareStatement,防止sql注入
+    ${}:直接从map集合中按照key的值取出map中对应的value注入sql语句中,存在安全问题
+
+    大多数情况下都使用#{}这种方式来获取数据
+    当原生JDBC不支持占位符的形式,那么就可以使用${}来将数据取出
+
+#{}取值的特殊用法,只在特殊情况下需要使用,JdbcType,用于出现NULL值时
+
+mybatis对数据进行封装其实是通过反射来对数据进行封装的,如果我们通过使用默认的方式对类进行数据的封装
+那么此时将会根据数据库中的字段名,通过反射来调用setter方法
+
+
+返回值
+集合类型:在mapper中的返回类型为集合中元素的数据类型
+map类型,如果查询的返回类型为map,key是数据库中列的值,value是对应列中数据库的值
+在mapper映射文件中resultType = "map",使用map是mybatis为Map起了一个别名
+
+当返回多条记录时,要将多条记录直接封装为一个map,要求使用数据库中主键的值作为key(自身想要使用什么类型都可以),封装的javaBean作为value
+此时返回的ReturnType直接编写为返回的javaBean类型,但是还要在接口方法中使用注解@Mapkey()告知mybatis使用数据库中哪一个
+属性作为key
+
+可以使用resultType使mybatis对返回的结果自动封装
+也可以使用resultMap来子定义封装的规则
+可以使用下面这个标签来声明自定义封装规则
+<resultMap></resultMap>
+该标签的type属性声明查询结果将被封装为什么类型
+id属性唯一标识这个自定义封装规则
+标签内部的<id>子标签用于定义主键列的封装规则
+column:声明数据库中对应的列
+property:声明封装到哪一项属性中
+<result>标签可以用于声明普通列的封装规则
+
+<id>定义主键在底层会有优化
+
+在resultMap定义封装规则时,如果不指定的话,那么查询结果将会自动进行封装
+但是如果我们编写resultMap,那么应该将规则编写完整
+
+编写一个复杂的resultMap
+
+查询员工时,同时查询出员工所在的部门信息,员工中存在一个部门属性,查询出来的某一列是部门属性的子属性
+可以直接使用级联属性来进行数据的封装
+
+也可以使用关联标签对属性进行封装,这个association标签是用于封装关联对象的子标签
+
+ <resultMap id="" type="">
+        <association property="" javaType="">
+            <id column="" property=""></id>
+            <result column="" property=""></result>
+        </association>
+    </resultMap>
+
+
+使用association标签来封装关联对象,这里直接使用select子标签来调用特定的查询,而column标签则指明前面查询出来的
+某列的结果传入这个查询,作为这个查询所需要的参数
+ <association property="" select="" column=""></association>
+
+ 可以在全局配置文件中加上两个<setting>
+<settings>
+        <setting name="lazyLoadingEnabled" value="true"/>
+        <setting name="aggressiveLazyLoading" value="false"/>
+    </settings>
+    这样属性在需要的时候才会被加载
+
+
+
+要求查出部门中所有的员工,使用多表联查
+当要封装的属性为集合属性时,可以使用collection标签来对属性进行封装,其中property属性为对应的元素的属性
+ofType:要被封装为什么类型的元素,集合中是什么类型的元素
+ <collection property="" ofType="">
+
+ </collection>
+
+
+ 实现上面的要求使用分步查询来实现
+  <collection property="" select="" column="">
+
+  </collection>
+
+在这个collection标签内部使用select属性使用另一个查询,column是要求传入的值的列
+
+
+当要传入多个值时,将要传入的值封装成一个map
+{key1=column1,key2=column2}
+这里的key1可以是方法的参数名
+column:表示的是数据库的哪一列
+
+
+在resultMap标签中可以使用鉴别器,对于某一列中不同的值,使用不同的封装规则
+其中javaType是用于说明列中数据的类型
+
+<discriminator javaType="" column="" >
+           <case value="" resultType="">
+            编写封装规则
+            </case>
+        </discriminator>
+
+  value:列中的值
+  resultType:指明里面编写的封装规则要封装成什么类型的数据
+
+  动态sql:
+  if：
+
+ 1. 需求,查询员工,传入哪个字段就根据这个字段进行查询
+
+ if标签,在test属性内部编写OGNL表达式,这个表达式成立才会将该字符串进行拼凑,否则不拼凑
+ 编写表达式时遇到特殊字符,则需要使用转译字符
+  <if test="">
+
+   </if>
+
+   但是如果第一个if中的表达式就不成立,此时将会报错
+
+此时存在两种解决方案:
+1. 在where后面先加上一个恒成立的条件
+2. where不再手动编写,而是使用where标签,此时where标签会去掉第一个多余的and或者or
+
+    问题：无法去掉最后一个多余的and或者or
+
+          使用where标签编写sql要规范
+
+3. 使用trim标签用于解决这个问题
+
+ <trim prefix="" prefixOverrides="" suffix="" suffixOverrides=""></trim>
+
+ prefix:在标签内部生成的语句整体加上一个前缀
+ prefixOverrides:将生成语句的多余的字符去掉
+ suffix:在生成的语句整体加上一个后缀
+ suffixOverrides:将生成的语句后面多余的字符串去掉
+
+ 这样就能够解决 后面/前面 多余的 and/or 的内容
+
+
+ 4.choose标签的使用相当于switch-case的使用
+   <choose>
+         <when test="">
+
+         </when>
+          <otherwise>
+
+          </otherwise>
+   </choose>
+   只使用其中一个查询条件,当满足test内部编写的OGNL表达式,才会使用这个条件
+   就是查询时只使用其中一个条件
+   而<otherwise>标签就相当于switch中的default,如果上面所有的条件都不满足,那就使用otherwise标签内部所使用的条件
+
+   <where>用于封装查询条件
+   <set>标签封装修改条件
+   update employee
+   <set>
+    要修改的内容
+   </set>
+   在设置更新条件时,可能某个更新条件为null,导致多余的,的出现,此时<set>标签会去掉多余的,
+
+   也可以使用<trim>标签使用set标签的功能
+
+
+
+   <foreach>标签
+
+       <foreach collection="" item="item_id" separator="" open="" close="">
+            #{item_id}
+       </foreach>
+      collection:指定要遍历的集合
+      list类型的参数会特殊处理封装在map,map的key就叫做list
+      item:将遍历出的元素赋给指定的变量
+      separator:指明遍历出来元素之间的分割符
+      open:结果集拼接上一个开始符号
+      close:遍历出来的结果集拼接上一个结束符号
+
+
+select * from employee where id in (1,2,3)
+假设传入的参数是一个list集合,此时可以使用foreach标签将传入的集合遍历出来
+
+测试:编写一个批量保存的方法,此时可以使用foreach标签来获取待保存的数据
+
+mybatis内部存在两个内置参数:
+
+_parameter:当前方法的所有参数
+_databaseId:可以获取当前数据库的别名
+
+bing标签的使用
+ <bind name="_lastName" value="'%'+#{lastName}+'%'"/>
+
+可以先获取参数,然后进行拼串的类似的操作,覆盖变量
+可以在select语句中直接获取该变量的值作为参数
+
+比如进行模糊查询
+
+sql标签:
+ <sql id="">
+    常用的sql语句
+ </sql>
+ 可以给经常使用的sql语句抽取出来,并且给这个sql语句起一个唯一标识
+<include refid="sql的id">
+    <property name="" value=""/>
+</include>
+ 在需要使用这个sql语句的位置使用refid属性使用特定的sql语句
+
+ 可以在include中使用子标签<property name="" value=""/>来设置某些属性
+ 然后在<sql>标签可以使用${property的name的值}来获取其中的值
+
+
+ mybatis的缓存机制:
+
+ 1. 一级缓存
+
+ 使用同一个sqlSession中获取同样的数据,第二次获取数据会直接从缓存中获取数据
+
+ 一级缓存失效的原因:
+
+ 1.SqlSession不同,自然便会有不同的缓存
+ 2.SqlSession相同,查询条件不同(当前一级缓存中还没有这个数据)
+ 3.SqlSession相同,两次查询之间执行了增删改的操作
+ 4.SqlSession相同,手动清除了一级缓存
+
+ 这个跟数据库的隔离级别应该是没有什么关系
+
+2. 二级缓存
+
+    1. 一个会话,查询一条数据,这个数据会被放在当前会话的一级缓存
+    2.如果会话关闭,一级缓存中的数据会被保存到二级缓存中,新的查询信息,就会放到二级缓存中
+    3.不同的namespace查出的数据会放在对应的命名空间的缓存中,存放在不同的map中

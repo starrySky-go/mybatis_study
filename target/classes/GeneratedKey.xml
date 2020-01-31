@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：命名空间，类似于java包，主要用于隔离sql语句的，后续有重要作用
+     #{}：占位符，相当于jdbc的?
+     ${}:字符串拼接指令，注意如果入参为普通数据类型时，括号里面只能写value
+ -->
+<mapper namespace="pratices.GeneratedKey.UserDao">
+   <insert id="insert" parameterType="com.itheima.domain.Student" useGeneratedKeys="true" keyProperty="id">
+       INSERT INTO student VALUES(id,name,gender,year)
+   </insert>
+</mapper>
